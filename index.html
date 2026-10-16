@@ -518,7 +518,7 @@
         <li><b>4. Marque causas e providências</b> clicando no <b>+</b> de cada aluno: uma única janela, com as duas listas. As listas já vêm preenchidas e podem ser editadas em “Editar listas…”.</li>
         <li><b>5. Corrija notas</b> clicando na célula. A nota editada fica em <b>laranja</b> na tela; a opção “Destacar notas editadas na impressão” decide se o laranja também sai no PDF.</li>
         <li><b>6. Revise a ata</b> no topo (já vem com série, turma, curso e bimestre) e os campos do cabeçalho, como o professor representante.</li>
-        <li><b>7. Professores e assinaturas:</b> na seção 7 da barra lateral, importe o arquivo (.md ou .txt) com os professores de cada turma (“Nome — Componente”, um título por turma) ou digite a lista. Vira a <b>última folha</b>: professores em ordem alfabética, componente, assinatura e as linhas de DIRETOR, COE e CGPG. Quem leciona mais de um componente aparece mais de uma vez.</li>
+        <li><b>7. Professores e assinaturas:</b> na seção 7 da barra lateral, importe o arquivo (.md ou .txt) com os professores de cada turma (“Nome — Componente”, um título por turma) ou digite a lista. Vira a <b>última folha</b>: professores em ordem alfabética, componente, assinatura e as linhas de DIRETOR, VICE-DIRETOR e CGPG. Quem leciona mais de um componente aparece mais de uma vez.</li>
         <li><b>8. Imprima ou salve em PDF</b> (papel A4, escala 100%, margens “Padrão”). Se houver muitos alunos, o relatório continua nas folhas seguintes, sempre com todas as colunas na largura da folha e o cabeçalho repetido.</li>
         <li><b>9. Histórico:</b> reabra, renomeie ou exclua relatórios (um a um ou em lote, marcando as caixas), filtre por bimestre e ordene por data, nome ou nº de notas editadas. Exporte tudo ou só um bimestre (backup .json, o padrão, ou Excel). O backup .json pode ser importado em outro navegador: ele é <b>mesclado</b> ao que já existe e, se algo já existir, você escolhe entre manter o antigo, substituir pelo novo ou duplicar.</li>
       </ol>
@@ -2171,7 +2171,7 @@ function renderSign() {
     <table class="sp-table"><colgroup><col style="width:36%"><col style="width:32%"><col style="width:32%"></colgroup>
       <thead><tr><th>NOME DO PROFESSOR</th><th>COMPONENTE CURRICULAR</th><th>ASSINATURA</th></tr></thead>
       <tbody>${rows.map(r => `<tr><td>${esc(r.nome)}</td><td>${esc(r.comp)}</td><td></td></tr>`).join('')}</tbody></table>
-    <div class="sp-sign"><div><div class="ln"></div>DIRETOR</div><div><div class="ln"></div>COE</div><div><div class="ln"></div>CGPG</div></div>`;
+    <div class="sp-sign"><div><div class="ln"></div>DIRETOR</div><div><div class="ln"></div>VICE-DIRETOR</div><div><div class="ln"></div>CGPG</div></div>`;
   return rows.length;
 }
 function updateTeachersUI() {
