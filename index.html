@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mapão – Relatório de Rendimento (A4)</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4338ca">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <!-- Dependências via CDN (precisa de internet na 1ª abertura). Para uso 100% offline, baixe os dois arquivos e troque os src. -->
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
@@ -290,6 +294,10 @@
     <a href="#/historico" class="sb-hist">
       <span>Histórico de relatórios</span><small id="histCount"></small>
     </a>
+    <div class="flex flex-wrap gap-2 mb-2">
+      <button id="btnBackupFull" type="button" data-tch-btn title="Baixa um .json com tudo que foi editado neste navegador" class="rounded-md border px-3 py-1.5 text-sm">Backup completo (.json)</button>
+      <button id="btnInstall" type="button" data-tch-btn class="hidden rounded-md border px-3 py-1.5 text-sm">Instalar como app</button>
+    </div>
 
     <details class="sec" data-sec="1" open>
       <summary><h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">1. Planilha</h2></summary>
@@ -377,6 +385,7 @@
       <div class="sec-body">
         <p id="dbCount" class="text-xs text-slate-600 mb-2"></p>
         <button type="button" data-open-editor="" class="w-full rounded-lg border border-indigo-700 text-indigo-700 hover:bg-indigo-50 text-sm font-semibold py-2">Editar causas e providências…</button>
+        <button id="btnExportLists" type="button" data-tch-btn class="mt-2 w-full rounded-md border px-3 py-1.5 text-sm">Exportar listas (.md)</button>
       </div>
     </details>
 
@@ -406,6 +415,8 @@
         <div class="flex flex-wrap gap-2">
           <button id="btnTch" type="button" data-tch-btn class="rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50">Editar professores…</button>
           <button id="btnTchImport" type="button" data-tch-btn class="rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50">Importar arquivo…</button>
+          <button id="btnTchExport" type="button" data-tch-btn class="rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50">Exportar (.md)</button>
+          <button id="btnTchRestore" type="button" data-tch-btn title="Volta ao conteúdo de professores/professores.md" class="rounded-md border px-3 py-1.5 text-sm hover:bg-slate-50">Restaurar do arquivo</button>
         </div>
         <input id="tchFile" type="file" accept=".md,.txt,text/markdown,text/plain" class="hidden" aria-label="Arquivo com a lista de professores por turma">
         <p class="text-xs text-slate-400">Um professor por linha: “Nome — Componente”. No arquivo, cada turma é um título (ex.: “2ª Série A”). A lista fica só no seu navegador.</p>
@@ -490,7 +501,7 @@
         <li><b>8. Imprima ou salve em PDF</b> (papel A4, escala 100%, margens “Padrão”). Se houver muitos alunos, o relatório continua nas folhas seguintes, sempre com todas as colunas na largura da folha e o cabeçalho repetido.</li>
         <li><b>9. Histórico:</b> reabra, renomeie ou exclua relatórios (um a um ou em lote, marcando as caixas), filtre por bimestre e ordene por data, nome ou nº de notas editadas. Exporte tudo ou só um bimestre (backup .json, o padrão, ou Excel). O backup .json pode ser importado em outro navegador: ele é <b>mesclado</b> ao que já existe e, se algo já existir, você escolhe entre manter o antigo, substituir pelo novo ou duplicar.</li>
       </ol>
-      <p class="text-xs text-slate-500 mt-5">Os dados ficam só neste navegador e não têm prazo de validade, mas somem se você limpar os dados do site. Exporte um backup de vez em quando.</p>
+      <p class="text-xs text-slate-500 mt-5">Os dados ficam só neste navegador e não têm prazo de validade, mas somem se você limpar os dados do site. Use “Backup completo (.json)” na barra lateral de vez em quando.</p>
       <p id="homeBack" class="hidden mt-4 text-center"><a href="#/" class="inline-block rounded-lg bg-indigo-700 hover:bg-indigo-800 px-4 py-2 text-sm font-semibold text-white"></a></p>
     </div>
 
@@ -610,7 +621,7 @@
     <div class="px-5 py-3 border-t flex items-center justify-between gap-3 flex-wrap">
       <span id="eErr" class="text-sm text-red-700" role="alert"></span>
       <div class="flex gap-2">
-        <button id="eExample" type="button" class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100">Inserir exemplo</button>
+        <button id="eExample" type="button" class="px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100">Restaurar do arquivo</button>
         <button id="eCancel" type="button" class="px-3 py-2 rounded-lg text-sm border hover:bg-slate-50">Cancelar</button>
         <button id="eOk" type="button" title="Ctrl+Enter" class="px-4 py-2 rounded-lg text-sm bg-indigo-700 hover:bg-indigo-800 disabled:opacity-40 text-white font-semibold">Salvar</button>
       </div>
@@ -1019,44 +1030,33 @@ const Core = (() => {
 /*</CORE>*/
 
 /* ====================================================================
-   LISTAS PADRÃO DE CAUSAS E PROVIDÊNCIAS (hardcoded)
-   Usadas na 1ª abertura (quando ainda não existe nada salvo no navegador) e
-   pelo botão "Preencher com exemplo" do editor. Para mudar o padrão, edite aqui.
+   LISTAS PADRÃO DE CAUSAS E PROVIDÊNCIAS
+   Lidas de causas-providencias/causas.md e providencias.md no carregamento.
+   Semeiam o navegador uma única vez e alimentam "Restaurar do arquivo" do editor.
    ==================================================================== */
-const DEFAULT_LISTS = {
-  causas: [
-  "Habilidades essenciais defasadas",
-  "Dificuldade de expressar-se oralmente ou por escrito de forma clara.",
-  "Dificuldade na leitura e interpretação de textos.",
-  "Dificuldade em compreender, desenvolver e interpretar operações matemáticas e desenvolver raciocínio lógico.",
-  "Dificuldade na construção de conceitos.",
-  "Dificuldade no relacionamento de ideias.",
-  "Dificuldade em desenvolver habilidades de resumir e sintetizar, selecionando informações.",
-  "Dificuldade em leitura, interpretação e construção de dados em tabelas e gráficos.",
-  "Dificuldade de expressar-se e comunicar-se utilizando diferentes linguagens.",
-  "Dificuldade em cooperar e participar das atividades em grupo.",
-  "Não realiza as atividades propostas/falta em avaliações.",
-  "Falta de concentração e atenção.",
-  "Não cumpre as normas estabelecidas.",
-  "Frequência insuficiente.",
-  "Dificuldade em desenvolver habilidades socioemocionais."
-],
-  provs: [
-  "Nivelamento (recuperação de habilidades anteriores).",
-  "Plano de Recuperação.",
-  "Orientação de estudos individualizada.",
-  "Intensificação da tutoria.",
-  "Metodologia adaptada.",
-  "Encaminhar para avaliação com profissional especializado.",
-  "Realizar a compensação de ausências.",
-  "Realizar as atividades propostas em sala de aula.",
-  "Respeitar as normas de convivência.",
-  "Regularidade na frequência.",
-  "Convocar os responsáveis para reunião individualizada.",
-  "Busca ativa",
-  "Encaminhar ao Conselho Tutelar."
-]
-};
+const DEFAULT_LISTS = { causas: [], provs: [] };
+const DEFAULT_FILES = { causas: 'causas-providencias/causas.md', provs: 'causas-providencias/providencias.md', teachers: 'professores/professores.md' };
+async function fetchText(path) {
+  const r = await fetch(path, { cache: 'no-cache' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.text();
+}
+function parseListMd(text) {   // um item por linha; ignora títulos (#) e linhas vazias; aceita "- item"
+  const seen = new Set(), out = [];
+  String(text).split(/\r?\n/).forEach(raw => {
+    const t = raw.replace(/^\s*[-*•]\s+/, '').replace(/\s+/g, ' ').trim();
+    if (!t || /^#/.test(raw.trim())) return;
+    const k = t.toLowerCase(); if (seen.has(k)) return; seen.add(k); out.push(t.slice(0, 300));
+  });
+  return out.slice(0, 200);
+}
+async function loadDefaultLists() {   // true se as duas listas foram lidas
+  try {
+    const [c, p] = await Promise.all([fetchText(DEFAULT_FILES.causas), fetchText(DEFAULT_FILES.provs)]);
+    DEFAULT_LISTS.causas = parseListMd(c); DEFAULT_LISTS.provs = parseListMd(p);
+    return DEFAULT_LISTS.causas.length + DEFAULT_LISTS.provs.length > 0;
+  } catch { return false; }
+}
 
 /* ====================================================================
    PERSISTÊNCIA – hoje localStorage. Para o Supabase, basta reimplementar
@@ -1083,14 +1083,14 @@ const Repo = {
       } else { localStorage.removeItem('mapao.db.v2'); localStorage.removeItem('mapao.marks.v2'); }
     } catch { /* mantém o v1 */ }
   },
-  // Listas padrão (DEFAULT_LISTS): na primeira abertura desta versão, acrescenta ao banco salvo os itens padrão que
+  // Listas padrão (DEFAULT_LISTS, vindas dos md): na primeira abertura, acrescenta ao banco salvo os itens padrão que
   // ainda não existem (comparação sem caixa/acento) e grava. Vale para banco novo OU já existente (inclusive vazio).
   // Um marcador impede que isso se repita: se o usuário editar, apagar ou limpar as listas depois, o padrão não volta.
   async getDB() {
     this._migrate();
     const db = Core.sanitizeDB(this._g('mapao.db.v2', null));
     try {
-      if (localStorage.getItem('mapao.defaults.v1') === null) {
+      if (localStorage.getItem('mapao.defaults.v1') === null && (DEFAULT_LISTS.causas.length || DEFAULT_LISTS.provs.length)) {   // sem arquivo lido: tenta de novo no próximo load
         let next = db.nextId;
         ['causas', 'provs'].forEach(k => {
           const have = new Set(db[k].map(it => Core.norm(it.text)));
@@ -1509,15 +1509,17 @@ async function downloadBlob(blob, name) {
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   return true;
 }
-async function exportReports(bim) {
+async function exportReports(bim, full) {
   const list = (await Repo.listReports()).filter(e => !bim || e.bim === bim).sort((a, b) => a.bim - b.bim || (a.createdAt || 0) - (b.createdAt || 0));
-  if (!list.length) { toast('Nenhum relatório para exportar.'); return; }
+  if (!list.length && !full) { toast('Nenhum relatório para exportar.'); return; }
   const data = [];
   for (const e of list) { const snap = await Repo.getReport(e.id); if (snap) data.push(buildExportReport(e, snap, await Repo.getMarks(e.id), await Repo.getAta(e.id))); }
-  const fmt = $('#histFmt').value, scope = bim ? bim + 'bimestre' : 'todos', day = new Date().toISOString().slice(0, 10);
-  const base = 'mapao-relatorios-' + scope + '-' + day;
+  const fmt = full ? 'json' : $('#histFmt').value, scope = full ? 'completo' : bim ? bim + 'bimestre' : 'todos', day = new Date().toISOString().slice(0, 10);
+  const base = (full ? 'mapao-backup-' : 'mapao-relatorios-') + scope + '-' + day;
   if (fmt === 'json') {
-    const out = { app: 'mapao-relatorio', versao: 2, exportadoEm: new Date().toISOString(), escopo: bim ? bimLabel(bim) : 'todos', professores: S.teachers, relatorios: data };
+    const out = { app: 'mapao-relatorio', versao: 2, exportadoEm: new Date().toISOString(), escopo: full ? 'completo' : bim ? bimLabel(bim) : 'todos', professores: S.teachers, relatorios: data,
+      listas: { causas: S.db.causas.map(it => it.text), providencias: S.db.provs.map(it => it.text) } };
+    if (full) { out.completo = true; out.logos = S.logos; out.preferencias = { meta: S.meta, opts: S.opts }; }
     if (!await downloadBlob(new Blob([JSON.stringify(out, null, 2)], { type: 'application/json' }), base + '.json')) return;
   } else {
     if (typeof XLSX === 'undefined') { toast('A biblioteca SheetJS não carregou (sem internet?).'); return; }
@@ -1540,7 +1542,7 @@ async function exportReports(bim) {
     });
     if (!await downloadBlob(new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/octet-stream' }), base + '.xlsx')) return;
   }
-  toast(data.length + (data.length === 1 ? ' relatório exportado' : ' relatórios exportados'));
+  toast(full ? 'Backup completo salvo (' + data.length + ' relatório(s), listas, professores, logos e preferências)' : data.length + (data.length === 1 ? ' relatório exportado' : ' relatórios exportados'));
 }
 
 function cleanTeachers(o) {   // lista de professores por turma vinda de arquivo (não confiável)
@@ -1661,6 +1663,19 @@ async function importBackup(file) {
     res.teachers++;
   });
   await Repo.saveReportIndex(list);
+  const L = data.listas && typeof data.listas === 'object' ? data.listas : {};
+  [['causas', L.causas], ['provs', L.providencias]].forEach(([k, arr]) => {
+    (Array.isArray(arr) ? arr : []).slice(0, Core.MAX_ITEMS).forEach(t => { t = T(t, Core.MAX_ITEM_LEN); if (t) idFor(k, t); });
+  });
+  if (data.completo === true) {   // logos só preenchem espaços vazios; cabeçalho só campos vazios; opções de tipo igual
+    const lg = data.logos && typeof data.logos === 'object' ? data.logos : {};
+    ['esq', 'dir', 'selo'].forEach(k => { if (!S.logos[k] && Core.isAllowedAtaImg(lg[k])) S.logos[k] = lg[k]; });
+    await Repo.saveLogos(S.logos);
+    const pf = data.preferencias && typeof data.preferencias === 'object' ? data.preferencias : {};
+    Object.entries(pf.meta && typeof pf.meta === 'object' ? pf.meta : {}).forEach(([k, v]) => { if (k !== 'data' && k in S.meta && !S.meta[k]) S.meta[k] = T(v, 200); });
+    Object.entries(pf.opts && typeof pf.opts === 'object' ? pf.opts : {}).forEach(([k, v]) => { if (k !== 'view' && k in S.opts && typeof v === typeof S.opts[k] && (typeof v !== 'string' || v.length < 100)) S.opts[k] = v; });
+    persistPrefs(); syncMetaInputs(); syncOptInputs(); applyZoom(); refresh();
+  }
   if (dbChanged) { await Repo.saveDB(S.db); updateDbCount(); }
   if (res.teachers) { await Repo.saveTeachers(S.teachers); refresh(); }
   if (S.reportId && res.replacedIds.includes(S.reportId)) { const id = S.reportId; S.reportId = null; await openReport(id); }   // o relatório aberto foi substituído: recarrega
@@ -1728,6 +1743,7 @@ function bindHist() {
   $('#impCancel').addEventListener('click', () => Dlg.tryClose($('#impModal')));
   $('#impOk').addEventListener('click', () => { if (IMP.finish) IMP.finish(IMP.cf); Dlg.close($('#impModal')); });
   $('#histExportAll').addEventListener('click', () => exportReports(0));
+  $('#btnBackupFull').addEventListener('click', () => exportReports(0, true));
   $('#histExportBim').addEventListener('click', () => exportReports(H.filter));
   $('#histImport').addEventListener('click', () => $('#histImportFile').click());
   $('#histImportFile').addEventListener('change', async e => {
@@ -2200,7 +2216,45 @@ async function importTeachers(file) {
   const n = keys.reduce((a, k) => a + classes[k].rows.length, 0);
   toast(keys.length + ' turma(s) e ' + n + ' linha(s) importadas' + (cc ? (classes[cc.key] ? ' · turma ' + cc.label + ' carregada' : ' · o arquivo não tem a turma ' + cc.label) : ''));
 }
+const tchToMd = () => {
+  const keys = Object.keys(S.teachers).sort((a, b) => S.teachers[a].label.localeCompare(S.teachers[b].label, 'pt-BR', { numeric: true }));
+  return '# Lista de Professores por Turma\n\n' + keys.map(k => '## **' + S.teachers[k].label + '**\n' + S.teachers[k].rows.map(r => '* ' + r.nome + ' — ' + r.comp).join('\n')).join('\n\n') + '\n';
+};
+async function exportTeachersMd() {
+  if (!Object.keys(S.teachers).length) { toast('Nenhum professor para exportar.'); return; }
+  if (await downloadBlob(new Blob([tchToMd()], { type: 'text/markdown' }), 'professores.md')) toast('Professores exportados');
+}
+async function exportListsMd() {
+  const md = (t, k) => '# ' + t + '\n\n' + S.db[k].map(it => '- ' + it.text).join('\n') + '\n';
+  if (!await downloadBlob(new Blob([md('Causas', 'causas')], { type: 'text/markdown' }), 'causas.md')) return;
+  if (await downloadBlob(new Blob([md('Providências', 'provs')], { type: 'text/markdown' }), 'providencias.md')) toast('Causas e providências exportadas');
+}
+async function seedTeachersLater() {
+  S.teachers = await Repo.getTeachers();
+  await seedTeachers();
+}
+async function seedTeachers() {   // 1ª abertura sem nada salvo: lê professores/professores.md; depois vale a edição local
+  try {
+    if (localStorage.getItem('mapao.teachers.seed.v1') !== null) return;
+    if (Object.keys(S.teachers).length) { localStorage.setItem('mapao.teachers.seed.v1', '1'); return; }
+    const { classes } = parseTeacherFile(await fetchText(DEFAULT_FILES.teachers));
+    if (!Object.keys(classes).length) return;
+    S.teachers = classes;
+    if (await Repo.saveTeachers(S.teachers)) localStorage.setItem('mapao.teachers.seed.v1', '1');
+  } catch { /* sem o arquivo: tenta de novo no próximo load */ }
+}
+async function restoreTeachers() {
+  if (!confirm('Substituir TODAS as listas de professores pelo conteúdo de professores/professores.md? As edições locais serão perdidas.')) return;
+  try {
+    const { classes } = parseTeacherFile(await fetchText(DEFAULT_FILES.teachers));
+    if (!Object.keys(classes).length) throw new Error('vazio');
+    S.teachers = classes; await Repo.saveTeachers(S.teachers); refresh(); toast('Professores restaurados do arquivo');
+  } catch { toast('Não foi possível ler professores/professores.md.'); }
+}
 function bindTeachers() {
+  $('#btnTchExport').addEventListener('click', exportTeachersMd);
+  $('#btnTchRestore').addEventListener('click', restoreTeachers);
+  $('#btnExportLists').addEventListener('click', exportListsMd);
   $('#btnTch').addEventListener('click', openTeachers);
   $('#btnTchImport').addEventListener('click', () => $('#tchFile').click());
   $('#tchFile').addEventListener('change', async e => {
@@ -2339,8 +2393,7 @@ function showReportModal(isNew) {
 }
 
 /* ---------- modal de edição em bloco das listas ---------- */
-// Botão "Preencher com exemplo": só preenche os textareas com as listas padrão (não grava até clicar em Salvar).
-const EXAMPLE = DEFAULT_LISTS;
+// Botão "Restaurar do arquivo": relê os md e preenche os textareas (não grava até clicar em Salvar).
 const E = { initial: {} };
 const edTa = k => $('#ta-' + k);
 
@@ -2657,9 +2710,10 @@ function bind() {
   });
   $('#eOk').addEventListener('click', saveEditor);
   $('#eCancel').addEventListener('click', () => Dlg.tryClose($('#editor')));
-  $('#eExample').addEventListener('click', () => {
-    if (KINDS.some(k => edTa(k).value.trim()) && !confirm('Substituir o texto atual dos dois campos pelo exemplo? (Nada é salvo até clicar em Salvar.)')) return;
-    KINDS.forEach(k => { edTa(k).value = EXAMPLE[k].join('\n'); }); renderEditor(); edTa('causas').focus();
+  $('#eExample').addEventListener('click', async () => {
+    if (KINDS.some(k => edTa(k).value.trim()) && !confirm('Substituir o texto atual dos dois campos pelo conteúdo dos arquivos? (Nada é salvo até clicar em Salvar.)')) return;
+    if (!await loadDefaultLists()) { toast('Não foi possível ler os arquivos de causas e providências.'); return; }
+    KINDS.forEach(k => { edTa(k).value = DEFAULT_LISTS[k].join('\n'); }); renderEditor(); edTa('causas').focus();
   });
 
   // diálogos: Esc, Ctrl+Enter, fundo e Tab preso dentro do diálogo do topo
@@ -2678,10 +2732,10 @@ function bind() {
 }
 
 async function init() {
+  await Promise.all([loadDefaultLists(), seedTeachersLater()]);
   const p = await Repo.getPrefs();
   if (p) { Object.assign(S.meta, p.meta || {}); Object.assign(S.opts, p.opts || {}); }
   S.db = await Repo.getDB();
-  S.teachers = await Repo.getTeachers();
   S.logos = await Repo.getLogos();
   S.meta.data = new Date().toLocaleDateString('pt-BR');
   try { document.execCommand('styleWithCSS', false, false); } catch {}   // prefere <b>/<i>/<u> a style inline na ata
@@ -2690,6 +2744,16 @@ async function init() {
   updateHistCount();
   await route();
 }
+
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('#btnInstall').classList.remove('hidden'); });
+window.addEventListener('appinstalled', () => { deferredInstall = null; $('#btnInstall').classList.add('hidden'); toast('App instalado'); });
+$('#btnInstall').addEventListener('click', async () => {
+  if (!deferredInstall) return;
+  deferredInstall.prompt(); await deferredInstall.userChoice.catch(() => {});
+  deferredInstall = null; $('#btnInstall').classList.add('hidden');
+});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 init();
 })();
 </script>
