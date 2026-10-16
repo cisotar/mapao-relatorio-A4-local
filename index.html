@@ -179,8 +179,18 @@
   #sidebar .sb-brand:focus-visible { outline:2px solid #71717a; outline-offset:2px; }
   #sidebar h1 { margin:0; font-size:18px; line-height:1.2; font-weight:700; color:#fff; }
   #sidebar .sb-sub { margin:4px 0 0; font-size:11px; line-height:1.4; color:#a1a1aa; }
-  #sidebar #sbClose { background:#3f3f46; border-radius:8px; padding:8px 10px; font-size:12px; font-weight:700; color:#fff; box-shadow:none; }
-  #sidebar #sbClose:hover { background:#52525b; }
+  .sb-toggle.hidden { display:none; }
+  #sidebar { overflow-x:hidden; }
+  #sidebar .sb-in, #sidebar .sb-foot { width:22rem; box-sizing:border-box; }
+  #sidebar.sb-collapsed { width:0; visibility:hidden; }
+  #sbWrap.sb-anim #sidebar { transition:width .25s ease, visibility 0s linear .25s; }
+  #sbWrap.sb-anim #sidebar:not(.sb-collapsed) { transition:width .25s ease, visibility 0s; }
+  @media (prefers-reduced-motion:reduce) { #sbWrap.sb-anim #sidebar { transition:none !important; } }
+  .sb-toggle { width:22px; height:100%; flex:none; display:flex; align-items:center; justify-content:center; background:#27272a; color:#d4d4d8; border:0; border-left:1px solid #3f3f46; cursor:pointer; padding:0; transition:background .15s; }
+  .sb-toggle span { font-size:22px; font-weight:700; line-height:1; transition:transform .15s; }
+  .sb-toggle:hover { background:#3f3f46; color:#fff; }
+  .sb-toggle:hover span { transform:scale(1.35); }
+  .sb-toggle:focus-visible { outline:2px solid #71717a; outline-offset:-2px; }
   #sidebar .sb-hist { display:flex; justify-content:space-between; align-items:center; border:1px solid #3f3f46; border-radius:10px; background:rgba(255,255,255,.06); color:#e4e4e7; font-size:13px; font-weight:700; padding:10px 12px; text-decoration:none; }
   #sidebar .sb-hist:hover { background:rgba(255,255,255,.10); }
   #sidebar .sb-hist small { font-weight:400; font-size:11px; color:#a1a1aa; }
@@ -217,7 +227,6 @@
   #sidebar .text-sm { font-size:1.00625rem; line-height:1.35; }
   #sidebar h1 { font-size:20.7px; }
   #sidebar .sb-sub { font-size:12.65px; }
-  #sidebar #sbClose { font-size:13.8px; }
   #sidebar .sb-hist { font-size:15px; }
   #sidebar .sb-hist small { font-size:12.65px; }
   #sidebar .sec > summary h2 { font-size:12.65px; }
@@ -291,14 +300,14 @@
 
 <div class="flex min-h-screen">
   <!-- ============ Barra lateral ============ -->
-  <aside id="sidebar" class="no-print w-[22rem] shrink-0 sticky top-0 h-screen overflow-y-auto">
+  <div id="sbWrap" class="no-print flex shrink-0 sticky top-0 h-screen">
+  <aside id="sidebar" class="w-[22rem] h-full overflow-y-auto">
    <div class="sb-in">
     <div class="flex items-start justify-between gap-2">
       <a href="#/inicio" class="sb-brand" title="Ir para a tela inicial (instruções)">
         <h1>Mapão · Relatório A4</h1>
         <p class="sb-sub">Rendimento escolar – SEDUC-SP. Tudo é processado no seu navegador.</p>
       </a>
-      <button id="sbClose" type="button" aria-controls="sidebar" aria-expanded="true" title="Ocultar barra lateral" aria-label="Ocultar barra lateral" class="shrink-0 rounded-lg bg-indigo-700 hover:bg-indigo-800 px-3 py-2 text-sm font-bold text-white shadow">« Ocultar</button>
     </div>
 
     <a href="#/historico" class="sb-hist">
@@ -451,10 +460,12 @@
       </div>
    </div>
   </aside>
+  <button id="sbClose" type="button" class="sb-toggle" aria-controls="sidebar" aria-expanded="true" title="Ocultar barra lateral" aria-label="Ocultar barra lateral"><span>«</span></button>
+  <button id="sbOpen" type="button" class="sb-toggle hidden" aria-controls="sidebar" aria-expanded="false" title="Exibir barra lateral" aria-label="Exibir barra lateral"><span>»</span></button>
+  </div>
 
   <!-- ============ Área principal ============ -->
   <main class="app-main flex-1 min-w-0 p-6">
-    <button id="sbOpen" type="button" aria-controls="sidebar" aria-expanded="false" class="no-print hidden mb-4 rounded-lg bg-indigo-700 hover:bg-indigo-800 px-4 py-2.5 text-base font-bold text-white shadow-md">» Exibir barra lateral</button>
     <div id="msg" class="no-print hidden mb-4 rounded-lg px-4 py-3 text-sm"></div>
 
     <!-- ============ Histórico de relatórios (#/historico) ============ -->
@@ -2590,7 +2601,8 @@ function bindInline() {
 /* ---------- barra lateral: sanfona ---------- */
 function applySidebar() {
   const open = S.opts.sidebar !== false;
-  $('#sidebar').classList.toggle('hidden', !open);
+  $('#sidebar').classList.toggle('sb-collapsed', !open);
+  $('#sbClose').classList.toggle('hidden', !open);
   $('#sbOpen').classList.toggle('hidden', open);
   $('#sbClose').setAttribute('aria-expanded', String(open)); $('#sbOpen').setAttribute('aria-expanded', String(open));
 }
@@ -2749,7 +2761,7 @@ async function init() {
   S.logos = await Repo.getLogos();
   S.meta.data = new Date().toLocaleDateString('pt-BR');
   try { document.execCommand('styleWithCSS', false, false); } catch {}   // prefere <b>/<i>/<u> a style inline na ata
-  bind(); bindInline(); bindSidebar(); applySidebar(); S.opts.view = 'a4';   // todo carregamento inicial começa na visualização Folha A4 (a escolha vale só durante a sessão)
+  bind(); bindInline(); bindSidebar(); applySidebar(); requestAnimationFrame(() => requestAnimationFrame(() => $('#sbWrap').classList.add('sb-anim'))); S.opts.view = 'a4';   // todo carregamento inicial começa na visualização Folha A4 (a escolha vale só durante a sessão)
   bindHist(); bindTeachers(); bindZoom(); syncMetaInputs(); syncOptInputs(); refresh();
   updateHistCount();
   await route();
