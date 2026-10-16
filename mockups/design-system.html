@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System · Mapão</title>
+<style>
+  :root {
+    --bg:#f4f4f5; --surface:#ffffff; --text:#000000; --border:#cbd5e1; --border-soft:#e2e8f0;
+    --pill-bg:#f8fafc; --pill-count:#e2e8f0;
+    --accent:#3f3f46; --accent-hover:#27272a; --on-accent:#ffffff;
+    --print:#f97316; --on-print:#ffffff;
+    --danger:#b91c1c; --danger-border:#fecaca;
+    --sb-bg:#161618; --sb-title:#ffffff; --sb-text:#d4d4d8; --sb-sub:#a1a1aa; --sb-field:#27272a; --sb-line:#3f3f46;
+    --th-bg:#e5e7eb; --zebra:#f4f4f5; --low:#b91c1c; --edited:#fed7aa; --editing:#fef9c3;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif; background:#fff; color:#18181b; font-size:14px; }
+  .app { display:grid; grid-template-columns:340px 1fr; min-height:100vh; }
+  @media (max-width:900px) { .app { grid-template-columns:1fr; } }
+
+  /* painel de controle */
+  .panel { background:#fafafa; border-right:1px solid #e4e4e7; padding:16px; position:sticky; top:0; height:100vh; overflow:auto; }
+  @media (max-width:900px) { .panel { position:static; height:auto; } }
+  .panel h1 { font-size:16px; margin:0 0 4px; }
+  .panel p { margin:0 0 12px; color:#52525b; font-size:12px; line-height:1.4; }
+  .panel h2 { font-size:11px; letter-spacing:.07em; text-transform:uppercase; margin:16px 0 6px; color:#52525b; }
+  .tk { display:grid; grid-template-columns:34px 1fr 82px; gap:8px; align-items:center; padding:3px 0; }
+  .tk input[type=color] { width:34px; height:26px; padding:0; border:1px solid #d4d4d8; border-radius:4px; background:none; cursor:pointer; }
+  .tk label { font-size:12px; line-height:1.2; }
+  .tk label small { display:block; color:#71717a; font-size:10px; }
+  .tk input[type=text] { width:100%; font:12px ui-monospace,Menlo,monospace; padding:3px 5px; border:1px solid #d4d4d8; border-radius:4px; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; margin-top:14px; }
+  .btns button { font:inherit; font-size:12px; padding:6px 10px; border:1px solid #a1a1aa; border-radius:6px; background:#fff; cursor:pointer; }
+  .btns button:hover { background:#f4f4f5; }
+  .btns button.main { background:#27272a; color:#fff; border-color:#27272a; font-weight:600; }
+  .btns button.main:hover { background:#3f3f46; }
+  #status { font-size:12px; margin-top:8px; color:#52525b; }
+  #status.dirty { color:#b45309; font-weight:600; }
+  #out { display:none; width:100%; height:200px; margin-top:8px; font:11px ui-monospace,Menlo,monospace; }
+
+  /* área de prévia */
+  .stage { padding:24px; background:var(--bg); color:var(--text); min-width:0; }
+  .stage h2.sec { font-size:12px; letter-spacing:.08em; text-transform:uppercase; margin:28px 0 10px; color:var(--text); }
+  .stage h2.sec:first-child { margin-top:0; }
+  .row { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; }
+
+  .sidebar { width:300px; background:var(--sb-bg); color:var(--sb-text); padding:14px; border-radius:10px; display:flex; flex-direction:column; gap:10px; }
+  .sidebar h3 { margin:0; font-size:18px; color:var(--sb-title); }
+  .sidebar .sub { font-size:11px; color:var(--sb-sub); margin:0; }
+  .sb-box { border:1px solid var(--sb-line); border-radius:10px; padding:10px; background:rgba(255,255,255,.05); }
+  .sb-box h4 { margin:0 0 8px; font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--sb-text); }
+  .sb-drop { border:1px dashed var(--sb-line); border-radius:8px; padding:12px; text-align:center; font-size:13px; color:var(--sb-title); }
+  .sb-drop small { display:block; color:var(--sb-text); margin-top:2px; }
+  .sb-input { width:100%; padding:7px 8px; background:var(--sb-field); color:var(--sb-text); border:1px solid var(--sb-line); border-radius:6px; font:inherit; margin-top:8px; }
+  .sb-link { font-size:12px; color:var(--sb-text); margin-top:8px; }
+  .btn-print { background:var(--print); color:var(--on-print); border:0; border-radius:10px; padding:11px; font-weight:700; font-size:14px; width:100%; }
+
+  .card { background:var(--surface); border:1px solid var(--border-soft); border-radius:12px; padding:18px; flex:1; min-width:320px; }
+  .card h3 { margin:0 0 4px; font-size:20px; color:var(--text); }
+  .card p { margin:0 0 10px; color:var(--text); }
+  .pill { display:inline-flex; align-items:center; gap:8px; padding:5px 12px 5px 5px; border:1px solid var(--border); border-radius:20px; background:var(--pill-bg); color:var(--text); font-size:14px; }
+  .pill .pn { width:24px; height:24px; border-radius:50%; background:var(--pill-count); display:grid; place-items:center; font-size:12px; font-weight:700; }
+  .pill.on { background:var(--accent); color:var(--on-accent); border-color:var(--accent); }
+  .pill.on .pn { background:#fff; color:var(--accent); }
+  .btn { font:inherit; font-size:14px; padding:6px 12px; border-radius:6px; border:1px solid var(--border); background:var(--surface); color:var(--text); }
+  .btn.primary { background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:600; }
+  .btn.primary:hover { background:var(--accent-hover); }
+  .btn.danger { color:var(--danger); border-color:var(--danger-border); }
+  .hist { display:flex; gap:10px; align-items:center; flex-wrap:wrap; border:1px solid var(--border-soft); border-radius:8px; padding:10px 14px; background:var(--surface); margin-top:12px; }
+  .hist b { font-size:15px; color:var(--text); }
+  .hist small { display:block; color:var(--text); font-size:12px; }
+
+  .sheet { border-collapse:collapse; font:12px Arial,Helvetica,sans-serif; color:var(--text); background:#fff; }
+  .sheet th, .sheet td { border:1px solid #555; padding:3px 8px; text-align:center; }
+  .sheet th { background:var(--th-bg); color:var(--text); }
+  .sheet td.n { text-align:left; }
+  .sheet tr:nth-child(even) td { background:var(--zebra); }
+  .sheet td.low { color:var(--low); font-weight:700; }
+  .sheet td.ed { background:var(--edited) !important; }
+  .sheet td.editing { background:var(--editing) !important; outline:2px solid var(--accent); outline-offset:-2px; }
+  .scroll { overflow-x:auto; max-width:100%; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>Design system · Mapão</h1>
+    <p>Mude uma cor e veja nas telas ao lado. Clique em “Salvar alterações” para guardar neste navegador, ou em “Restaurar configurações originais” para voltar ao padrão. “Copiar CSS” gera o bloco para me enviar.</p>
+    <div id="tokens"></div>
+    <div class="btns">
+      <button id="saveBtn" class="main">Salvar alterações</button>
+      <button id="reset">Restaurar configurações originais</button>
+    </div>
+    <div id="status">Sem alterações.</div>
+    <div class="btns">
+      <button id="copy">Copiar CSS</button>
+      <button id="show">Ver CSS</button>
+    </div>
+    <textarea id="out" readonly></textarea>
+  </aside>
+
+  <main class="stage">
+    <h2 class="sec">Barra lateral</h2>
+    <div class="row">
+      <div class="sidebar">
+        <div class="sb-box"><h3>Mapão · Relatório A4</h3><p class="sub">Rendimento escolar – SEDUC-SP. Tudo é processado no seu navegador.</p></div>
+        <div class="sb-box">
+          <h4>1. Planilha</h4>
+          <div class="sb-drop">Arraste os arquivos ou clique aqui<small>.xlsx, .xlsm ou .csv</small></div>
+          <div class="sb-link">Carregar planilha de exemplo</div>
+        </div>
+        <div class="sb-box">
+          <h4>2. Cabeçalho do relatório</h4>
+          <input class="sb-input" value="Mathilde Teixeira de Moraes Professora">
+          <input class="sb-input" placeholder="Professor(a) representante">
+        </div>
+        <button class="btn-print">Imprimir / Salvar PDF</button>
+      </div>
+
+      <div class="card">
+        <h2 class="sec" style="margin-top:0">Histórico de relatórios</h2>
+        <p>Cada planilha enviada gera um relatório, salvo neste navegador.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <span class="pill on">Todos <span class="pn">2</span></span>
+          <span class="pill">1º bimestre <span class="pn">0</span></span>
+          <span class="pill">3º bimestre <span class="pn">2</span></span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn primary">Exportar todos (2)</button>
+          <button class="btn">Importar backup (.json)</button>
+          <button class="btn danger">Excluir selecionados</button>
+        </div>
+        <div class="hist">
+          <div style="flex:1;min-width:180px"><b>2ª série A – Administração</b>
+            <small>4050 - ADMINISTRAÇAO · Conselho Terceiro Bimestre</small>
+            <small>44 aluno(s) · 0 nota(s) editada(s)</small></div>
+          <button class="btn">Abrir</button><button class="btn">Renomear</button><button class="btn danger">Excluir</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="sec">Tela inicial (instruções)</h2>
+    <div class="card" style="max-width:760px">
+      <h3 style="text-align:center">Mapão · Relatório A4</h3>
+      <p style="text-align:center">Transforma o Mapão escolar (planilha) em um relatório de rendimento em folha A4 retrato.</p>
+      <p><b>1. Envie a planilha</b> do Mapão (.xlsx, .xlsm ou .csv) pela barra lateral.</p>
+      <p><b>2. Escolha o bimestre</b> na janela que abre.</p>
+    </div>
+
+    <h2 class="sec">Relatório (folha A4)</h2>
+    <div class="scroll">
+    <table class="sheet">
+      <thead><tr><th>Nº</th><th>ALUNO</th><th>SIT</th><th>BIO</th><th>MAT</th><th>PV</th><th>MÉDIA</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="n">Aila Vitória B. da Silva</td><td></td><td>10</td><td>10</td><td>10</td><td>8,9</td></tr>
+        <tr><td>2</td><td class="n">Ana Julia Soares Franco</td><td>TR</td><td>/</td><td>/</td><td>/</td><td>/</td></tr>
+        <tr><td>3</td><td class="n">Anna Beatriz Dias Antonini</td><td></td><td>10</td><td>10</td><td class="low">3</td><td>7,5</td></tr>
+        <tr><td>4</td><td class="n">Anne Emanuelly Souza Silva</td><td></td><td>7</td><td class="ed">7</td><td>6</td><td>7,4</td></tr>
+        <tr><td>5</td><td class="n">Bianca Victoria de Moraes</td><td></td><td>6</td><td class="editing">7</td><td>6</td><td>6,6</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p style="font-size:12px;margin-top:6px">Vermelho = nota abaixo de 5 · laranja = nota editada · amarelo = célula em edição.</p>
+  </main>
+</div>
+
+<script>
+const TOKENS = [
+  ['Página', [
+    ['--bg','Fundo da página'], ['--surface','Cartões / superfícies'], ['--text','Texto','principal, sempre escuro'],
+    ['--border','Borda forte'], ['--border-soft','Borda suave']]],
+  ['Botões e pills', [
+    ['--accent','Cor de destaque','pill ativa, botão primário'], ['--accent-hover','Destaque (hover)'], ['--on-accent','Texto sobre destaque'],
+    ['--pill-bg','Fundo da pill'], ['--pill-count','Bolinha do contador'],
+    ['--danger','Texto de excluir'], ['--danger-border','Borda de excluir']]],
+  ['Imprimir', [['--print','Botão imprimir'], ['--on-print','Texto do botão imprimir']]],
+  ['Barra lateral', [
+    ['--sb-bg','Fundo'], ['--sb-title','Títulos e destaque'], ['--sb-text','Texto'], ['--sb-sub','Texto secundário'],
+    ['--sb-field','Fundo dos campos'], ['--sb-line','Bordas']]],
+  ['Relatório', [
+    ['--th-bg','Cabeçalho da tabela'], ['--zebra','Linhas alternadas'], ['--low','Nota baixa'],
+    ['--edited','Nota editada'], ['--editing','Célula em edição']]]
+];
+const root = document.documentElement, KEY = 'mapao.ds.v1';
+const defaults = {};
+const cs = getComputedStyle(root);
+TOKENS.forEach(([, items]) => items.forEach(([v]) => defaults[v] = cs.getPropertyValue(v).trim()));
+let saved = Object.assign({}, defaults);
+try { Object.assign(saved, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
+let cur = Object.assign({}, saved);
+const status = document.getElementById('status');
+const refresh = () => {
+  const dirty = Object.keys(cur).some(k => cur[k].toLowerCase() !== saved[k].toLowerCase());
+  status.className = dirty ? 'dirty' : '';
+  status.textContent = dirty ? 'Alterações ainda não salvas.' : 'Sem alterações pendentes.';
+};
+const apply = (v, c) => { cur[v] = c; root.style.setProperty(v, c); };
+const wrap = document.getElementById('tokens');
+const refs = {};
+TOKENS.forEach(([title, items]) => {
+  const h = document.createElement('h2'); h.textContent = title; wrap.appendChild(h);
+  items.forEach(([v, label, hint]) => {
+    const d = document.createElement('div'); d.className = 'tk';
+    d.innerHTML = `<input type="color"><label>${label}${hint ? `<small>${hint}</small>` : ''}</label><input type="text" maxlength="7">`;
+    const [pick, , txt] = [d.children[0], d.children[1], d.children[2]];
+    refs[v] = [pick, txt];
+    pick.oninput = () => { txt.value = pick.value; apply(v, pick.value); refresh(); };
+    txt.oninput = () => { if (/^#[0-9a-f]{6}$/i.test(txt.value)) { pick.value = txt.value; apply(v, txt.value); refresh(); } };
+    wrap.appendChild(d);
+  });
+});
+function sync() { for (const v in refs) { apply(v, cur[v]); refs[v][0].value = cur[v]; refs[v][1].value = cur[v]; } }
+sync(); refresh();
+const css = () => ':root {\n' + Object.entries(cur).map(([k, v]) => `  ${k}: ${v};`).join('\n') + '\n}';
+const out = document.getElementById('out');
+document.getElementById('show').onclick = () => { out.style.display = out.style.display === 'block' ? 'none' : 'block'; out.value = css(); };
+document.getElementById('copy').onclick = async e => {
+  out.value = css();
+  try { await navigator.clipboard.writeText(out.value); e.target.textContent = 'Copiado!'; }
+  catch (err) { out.style.display = 'block'; out.select(); e.target.textContent = 'Selecione e copie'; }
+  setTimeout(() => e.target.textContent = 'Copiar CSS', 1500);
+};
+document.getElementById('saveBtn').onclick = e => {
+  saved = Object.assign({}, cur);
+  try { localStorage.setItem(KEY, JSON.stringify(saved)); status.textContent = 'Alterações salvas neste navegador.'; status.className = ''; }
+  catch (err) { status.textContent = 'Não foi possível salvar (armazenamento bloqueado).'; status.className = 'dirty'; }
+};
+document.getElementById('reset').onclick = () => {
+  cur = Object.assign({}, defaults); saved = Object.assign({}, defaults);
+  try { localStorage.removeItem(KEY); } catch (err) {}
+  sync(); status.textContent = 'Configurações originais restauradas.'; status.className = '';
+};
+</script>
+</body>
+</html>
