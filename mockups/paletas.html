@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paletas — Mapão A4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── página de comparação ─────────────────────────────── */
+:root {
+  --page-bg: #f0f0ee;
+  --page-fg: #1a1a1a;
+  --page-card: #ffffff;
+  --page-border: #e0ddd8;
+  --page-muted: #6b6b6b;
+  --label-bg: #1a1a1a;
+  --label-fg: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page-bg: #18181b;
+    --page-fg: #e4e4e7;
+    --page-card: #27272a;
+    --page-border: #3f3f46;
+    --page-muted: #a1a1aa;
+    --label-bg: #e4e4e7;
+    --label-fg: #18181b;
+    color-scheme: dark;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-family: 'Inter', system-ui, sans-serif; background: var(--page-bg); color: var(--page-fg); }
+body { padding: 40px 24px 60px; max-width: 1200px; margin: 0 auto; }
+
+header { margin-bottom: 40px; }
+header h1 { font-family: 'DM Sans', sans-serif; font-size: 1.5rem; font-weight: 700; letter-spacing: -.02em; }
+header p { margin-top: 6px; color: var(--page-muted); font-size: .9rem; }
+
+/* grid de 3 colunas, empilha em telas estreitas */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+
+.palette-card { display: flex; flex-direction: column; gap: 14px; }
+.palette-label { display: inline-flex; align-items: center; gap: 8px; }
+.palette-label .num { background: var(--label-bg); color: var(--label-fg); font-size: .7rem; font-weight: 700; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-family: 'DM Sans', sans-serif; flex-shrink: 0; }
+.palette-label .name { font-weight: 600; font-size: .95rem; }
+.palette-desc { font-size: .8rem; color: var(--page-muted); line-height: 1.5; }
+
+/* moldura que contém o mock — overflow clip para não vazar */
+.mock-frame {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--page-border);
+  box-shadow: 0 4px 20px rgba(0,0,0,.08);
+  /* tamanho real do mock escalado para caber */
+  position: relative;
+  height: 420px;
+}
+.mock-inner {
+  position: absolute; inset: 0;
+  display: flex;
+  transform-origin: top left;
+}
+
+/* swatches */
+.swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+.sw { width: 26px; height: 26px; border-radius: 6px; border: 1px solid rgba(0,0,0,.08); flex-shrink: 0; }
+.sw-label { font-size: .7rem; color: var(--page-muted); margin-top: 4px; }
+
+/* ── componentes compartilhados do mock ──────────────── */
+.m-sidebar {
+  width: 200px; flex-shrink: 0;
+  display: flex; flex-direction: column;
+  height: 420px; overflow: hidden;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 12px;
+}
+.m-sb-in { flex: 1; overflow: hidden; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.m-brand { border-radius: 8px; padding: 8px 10px; border: 1px solid; }
+.m-brand h1 { font-size: 13px; font-weight: 700; }
+.m-brand p  { font-size: 9px; margin-top: 2px; }
+.m-hist { display: flex; justify-content: space-between; align-items: center; border-radius: 8px; padding: 7px 10px; border: 1px solid; font-weight: 700; font-size: 11px; }
+.m-section { border-radius: 8px; border: 1px solid; overflow: hidden; }
+.m-section-head { padding: 7px 10px; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+.m-section-body { padding: 4px 10px 8px; display: flex; flex-direction: column; gap: 5px; }
+.m-drop { border: 1.5px dashed; border-radius: 6px; padding: 10px; text-align: center; font-size: 10px; }
+.m-btn { border-radius: 6px; padding: 5px 8px; border: 1px solid; font-size: 10px; font-weight: 600; cursor: default; text-align: center; }
+.m-sb-foot { padding: 10px 12px; border-top: 1px solid; }
+.m-print { border-radius: 8px; padding: 9px; font-size: 11px; font-weight: 700; text-align: center; }
+
+.m-main { flex: 1; min-width: 0; padding: 14px; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+.m-toolbar { display: flex; gap: 6px; align-items: center; }
+.m-toolbar-btn { border-radius: 6px; padding: 4px 9px; border: 1px solid; font-size: 10px; font-weight: 600; }
+.m-table-wrap { border-radius: 8px; overflow: hidden; border: 1px solid; font-size: 10px; flex: 1; }
+.m-table { width: 100%; border-collapse: collapse; }
+.m-table thead th { padding: 5px 7px; text-align: center; font-weight: 700; font-size: 9px; letter-spacing: .03em; }
+.m-table tbody td { padding: 5px 7px; text-align: center; border-top: 1px solid; }
+.m-table tbody td.name { text-align: left; font-weight: 500; }
+.m-table tbody td.low { font-weight: 700; }
+.m-table tbody td.plus { font-weight: 700; font-size: 12px; }
+.m-table tfoot td { padding: 4px 7px; font-weight: 700; font-size: 9px; text-align: center; border-top: 1px solid; }
+.m-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+.m-pill { border-radius: 20px; padding: 3px 8px; border: 1px solid; font-size: 9px; font-weight: 600; }
+
+/* ── PALETA 1: NOITE ──────────────────────────────────── */
+.p1 { --sb: #090d18; --sb2: #0e1320; --sb-fg: #b8cce4; --sb-sub: #6b88a8; --sb-ac: #38bdf8; --sb-ac2: #0ea5e9; --sb-hi: #1a2d4d; --sb-bdr: #1d2d45; --sb-bdr2: rgba(56,189,248,.25); --pr: #f59e0b; --pr-fg: #0a0e1a; --main: #0f1623; --card: #141c2d; --card2: #192234; --head: #1d2944; --stripe: #121929; --ac: #38bdf8; --ac-fg: #0a0e1a; --fg: #dae6f2; --fg2: #6b88a8; --bdr: #1d2d45; --low: #f87171; --sit-ok: #34d399; }
+.p1 .m-sidebar { background: var(--sb); color: var(--sb-fg); }
+.p1 .m-brand { background: rgba(255,255,255,.04); border-color: var(--sb-bdr); }
+.p1 .m-brand h1 { color: #fff; }
+.p1 .m-brand p { color: var(--sb-sub); }
+.p1 .m-hist { background: rgba(56,189,248,.12); border-color: var(--sb-bdr2); color: #fff; }
+.p1 .m-section { background: rgba(255,255,255,.03); border-color: var(--sb-bdr); }
+.p1 .m-section-head { color: var(--sb-sub); }
+.p1 .m-drop { border-color: var(--sb-bdr); color: var(--sb-sub); }
+.p1 .m-btn { background: rgba(255,255,255,.05); border-color: var(--sb-bdr); color: var(--sb-fg); }
+.p1 .m-sb-foot { background: var(--sb); border-color: var(--sb-bdr); }
+.p1 .m-print { background: var(--pr); color: var(--pr-fg); border-radius: 8px; }
+.p1 .m-main { background: var(--main); }
+.p1 .m-toolbar-btn { background: var(--card); border-color: var(--bdr); color: var(--fg); }
+.p1 .m-toolbar-btn.ac { background: var(--ac); border-color: var(--ac); color: var(--ac-fg); }
+.p1 .m-table-wrap { background: var(--card); border-color: var(--bdr); }
+.p1 .m-table thead th { background: var(--head); color: var(--sb-sub); }
+.p1 .m-table tbody td { color: var(--fg); border-color: var(--bdr); }
+.p1 .m-table tbody tr:nth-child(even) td { background: var(--stripe); }
+.p1 .m-table tbody td.name { color: var(--fg); }
+.p1 .m-table tbody td.low { color: var(--low); }
+.p1 .m-table tfoot td { background: var(--head); color: var(--sb-sub); border-color: var(--bdr); }
+.p1 .m-pill { background: rgba(56,189,248,.12); border-color: var(--sb-bdr2); color: var(--ac); }
+.p1 .m-pill.on { background: var(--ac); border-color: var(--ac); color: var(--ac-fg); }
+
+/* ── PALETA 2: CHUMBO ─────────────────────────────────── */
+.p2 { --sb: #161618; --sb2: #1c1c1e; --sb-fg: #d4d4d8; --sb-sub: #71717a; --sb-hi: #27272a; --sb-bdr: #2e2e32; --pr: #f97316; --pr-fg: #fff; --main: #f4f4f5; --card: #ffffff; --head: #e4e4e7; --stripe: #fafafa; --ac: #3f3f46; --ac-fg: #fff; --fg: #18181b; --fg2: #71717a; --bdr: #e4e4e7; --low: #dc2626; --sit-ok: #16a34a; }
+.p2 .m-sidebar { background: var(--sb); color: var(--sb-fg); }
+.p2 .m-brand { background: rgba(255,255,255,.03); border-color: var(--sb-bdr); }
+.p2 .m-brand h1 { color: #fafafa; }
+.p2 .m-brand p { color: var(--sb-sub); }
+.p2 .m-hist { background: rgba(255,255,255,.05); border-color: var(--sb-bdr); color: #e4e4e7; }
+.p2 .m-section { background: rgba(255,255,255,.03); border-color: var(--sb-bdr); }
+.p2 .m-section-head { color: #c4c4c8; }
+.p2 .m-drop { border-color: var(--sb-bdr); color: #b4b4b8; }
+.p2 .m-btn { background: rgba(255,255,255,.04); border-color: var(--sb-bdr); color: var(--sb-fg); }
+.p2 .m-sb-foot { background: var(--sb); border-color: var(--sb-bdr); }
+.p2 .m-print { background: var(--pr); color: var(--pr-fg); }
+.p2 .m-main { background: var(--main); }
+.p2 .m-toolbar-btn { background: var(--card); border-color: var(--bdr); color: var(--fg); }
+.p2 .m-toolbar-btn.ac { background: var(--ac); border-color: var(--ac); color: var(--ac-fg); }
+.p2 .m-table-wrap { background: var(--card); border-color: var(--bdr); }
+.p2 .m-table thead th { background: var(--head); color: #18181b; }
+.p2 .m-table tbody td { color: var(--fg); border-color: var(--bdr); }
+.p2 .m-table tbody tr:nth-child(even) td { background: var(--stripe); }
+.p2 .m-table tbody td.low { color: var(--low); }
+.p2 .m-table tfoot td { background: var(--head); color: var(--fg2); border-color: var(--bdr); }
+.p2 .m-pill { background: #f4f4f5; border-color: var(--bdr); color: var(--fg2); }
+.p2 .m-pill.on { background: var(--ac); border-color: var(--ac); color: var(--ac-fg); }
+
+/* ── PALETA 3: ATUAL REFINADA ─────────────────────────── */
+.p3 { --sb: #1e1b4b; --sb2: #2c2878; --sb-fg: #e0e7ff; --sb-sub: #a5b4fc; --sb-hi: #2e2a6a; --sb-bdr: rgba(165,180,252,.3); --sb-ac: #4f46e5; --pr: #d97706; --pr-fg: #fff; --main: #f1f5f9; --card: #ffffff; --head: #e9ecf5; --stripe: #f8f9ff; --ac: #4338ca; --ac-fg: #fff; --fg: #1e293b; --fg2: #64748b; --bdr: #e2e8f0; --low: #b91c1c; --sit-ok: #15803d; }
+.p3 .m-sidebar { background: var(--sb); color: var(--sb-fg); }
+.p3 .m-brand { background: rgba(255,255,255,.06); border-color: var(--sb-bdr); }
+.p3 .m-brand h1 { color: #fff; }
+.p3 .m-brand p { color: var(--sb-sub); }
+.p3 .m-hist { background: rgba(79,70,229,.25); border-color: var(--sb-ac); color: #fff; }
+.p3 .m-section { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); }
+.p3 .m-section-head { color: #c7d2fe; }
+.p3 .m-drop { border-color: rgba(165,180,252,.4); color: var(--sb-sub); }
+.p3 .m-btn { background: rgba(255,255,255,.06); border-color: rgba(165,180,252,.4); color: var(--sb-fg); }
+.p3 .m-sb-foot { background: var(--sb); border-color: rgba(255,255,255,.1); }
+.p3 .m-print { background: var(--pr); color: var(--pr-fg); }
+.p3 .m-main { background: var(--main); }
+.p3 .m-toolbar-btn { background: var(--card); border-color: var(--bdr); color: var(--fg); }
+.p3 .m-toolbar-btn.ac { background: var(--ac); border-color: var(--ac); color: var(--ac-fg); }
+.p3 .m-table-wrap { background: var(--card); border-color: var(--bdr); }
+.p3 .m-table thead th { background: var(--head); color: var(--fg2); }
+.p3 .m-table tbody td { color: var(--fg); border-color: var(--bdr); }
+.p3 .m-table tbody tr:nth-child(even) td { background: var(--stripe); }
+.p3 .m-table tbody td.low { color: var(--low); }
+.p3 .m-table tfoot td { background: var(--head); color: var(--fg2); border-color: var(--bdr); }
+.p3 .m-pill { background: #f1f5f9; border-color: var(--bdr); color: var(--fg2); }
+.p3 .m-pill.on { background: var(--ac); border-color: var(--ac); color: var(--ac-fg); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Paletas de Cores · Mapão A4</h1>
+  <p>Três propostas. Cada mockup simula a barra lateral + área principal com tabela e botões reais.</p>
+</header>
+
+<div class="grid">
+
+  <!-- ── PALETA 1: NOITE ── -->
+  <div class="palette-card">
+    <div>
+      <div class="palette-label">
+        <span class="num">1</span>
+        <span class="name">Noite</span>
+      </div>
+      <p class="palette-desc" style="margin-top:6px">Interface totalmente escura. Azul-céu como acento. Boa para uso prolongado em ambientes com pouca luz.</p>
+    </div>
+    <div class="swatches">
+      <div class="sw" style="background:#090d18" title="Sidebar"></div>
+      <div class="sw" style="background:#0f1623" title="Fundo"></div>
+      <div class="sw" style="background:#141c2d" title="Card"></div>
+      <div class="sw" style="background:#1d2944" title="Cabeçalho"></div>
+      <div class="sw" style="background:#38bdf8" title="Acento"></div>
+      <div class="sw" style="background:#f59e0b" title="Imprimir"></div>
+      <div class="sw" style="background:#f87171" title="Baixo"></div>
+    </div>
+    <div class="mock-frame p1">
+      <div class="mock-inner">
+        <div class="m-sidebar">
+          <div class="m-sb-in">
+            <div class="m-brand">
+              <h1>Mapão · A4</h1>
+              <p>Rendimento escolar – SEDUC-SP</p>
+            </div>
+            <div class="m-hist">
+              <span>Histórico</span><span style="font-size:9px;font-weight:400">3</span>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">1. Planilha <span>▾</span></div>
+              <div class="m-section-body">
+                <div class="m-drop">Arraste os arquivos ou clique aqui<br><span style="font-size:9px">.xlsx, .xlsm ou .csv</span></div>
+              </div>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">5. Causas e providências <span>▾</span></div>
+              <div class="m-section-body">
+                <div class="m-btn">Editar causas e providências…</div>
+              </div>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">7. Professores <span>▾</span></div>
+              <div class="m-section-body">
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <div class="m-btn" style="flex:1">Editar…</div>
+                  <div class="m-btn" style="flex:1">Importar…</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="m-sb-foot">
+            <div class="m-print">Imprimir / Salvar PDF</div>
+          </div>
+        </div>
+        <div class="m-main">
+          <div class="m-toolbar">
+            <div class="m-toolbar-btn ac">Folha A4</div>
+            <div class="m-toolbar-btn">Fluida</div>
+            <div style="flex:1"></div>
+            <div class="m-toolbar-btn">2ª série A – Informática</div>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center;font-size:10px;color:#6b88a8">
+            <span>3º bimestre · 2025</span>
+          </div>
+          <div class="m-table-wrap">
+            <table class="m-table">
+              <thead>
+                <tr>
+                  <th style="width:22px">Nº</th>
+                  <th class="name" style="text-align:left">Aluno</th>
+                  <th>POR</th><th>MAT</th><th>BIO</th><th>HIS</th>
+                  <th>+</th>
+                  <th>Sit.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td><td class="name">Ana Beatriz S.</td>
+                  <td>7</td><td>8</td><td>9</td><td>6</td>
+                  <td class="plus" style="color:#38bdf8">+</td>
+                  <td style="color:#34d399;font-weight:700;font-size:9px">APR</td>
+                </tr>
+                <tr>
+                  <td>2</td><td class="name">Carlos Eduardo M.</td>
+                  <td class="low">3</td><td class="low">2</td><td>5</td><td>4</td>
+                  <td class="plus" style="color:#38bdf8">+</td>
+                  <td style="color:#f87171;font-weight:700;font-size:9px">REP</td>
+                </tr>
+                <tr>
+                  <td>3</td><td class="name">Daniela O.</td>
+                  <td>8</td><td>7</td><td>8</td><td>9</td>
+                  <td class="plus" style="color:#38bdf8">+</td>
+                  <td style="color:#34d399;font-weight:700;font-size:9px">APR</td>
+                </tr>
+                <tr>
+                  <td>4</td><td class="name">Eduardo F.</td>
+                  <td>5</td><td class="low">4</td><td>6</td><td>5</td>
+                  <td class="plus" style="color:#38bdf8">+</td>
+                  <td style="color:#fbbf24;font-weight:700;font-size:9px">REC</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr><td></td><td>Média</td><td>5,7</td><td>5,2</td><td>7,0</td><td>6,0</td><td></td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="m-pills">
+            <div class="m-pill on">1º bimestre</div>
+            <div class="m-pill">2º bimestre</div>
+            <div class="m-pill on">3º bimestre</div>
+            <div class="m-pill">4º bimestre</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PALETA 2: CHUMBO ── -->
+  <div class="palette-card">
+    <div>
+      <div class="palette-label">
+        <span class="num">2</span>
+        <span class="name">Chumbo</span>
+      </div>
+      <p class="palette-desc" style="margin-top:6px">Barra lateral quase preta, área principal em cinza claro. Seriedade sem acento cromático. Laranja no botão de imprimir.</p>
+    </div>
+    <div class="swatches">
+      <div class="sw" style="background:#161618" title="Sidebar"></div>
+      <div class="sw" style="background:#27272a" title="Sec. head"></div>
+      <div class="sw" style="background:#f4f4f5" title="Fundo"></div>
+      <div class="sw" style="background:#e4e4e7" title="Cabeçalho"></div>
+      <div class="sw" style="background:#3f3f46" title="Acento"></div>
+      <div class="sw" style="background:#f97316" title="Imprimir"></div>
+      <div class="sw" style="background:#dc2626" title="Baixo"></div>
+    </div>
+    <div class="mock-frame p2">
+      <div class="mock-inner">
+        <div class="m-sidebar">
+          <div class="m-sb-in">
+            <div class="m-brand">
+              <h1>Mapão · A4</h1>
+              <p>Rendimento escolar – SEDUC-SP</p>
+            </div>
+            <div class="m-hist">
+              <span>Histórico</span><span style="font-size:9px;font-weight:400">3</span>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">1. Planilha <span>▾</span></div>
+              <div class="m-section-body">
+                <div class="m-drop">Arraste os arquivos ou clique aqui<br><span style="font-size:9px">.xlsx, .xlsm ou .csv</span></div>
+              </div>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">5. Causas e providências <span>▾</span></div>
+              <div class="m-section-body">
+                <div class="m-btn">Editar causas e providências…</div>
+              </div>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">7. Professores <span>▾</span></div>
+              <div class="m-section-body">
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <div class="m-btn" style="flex:1">Editar…</div>
+                  <div class="m-btn" style="flex:1">Importar…</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="m-sb-foot">
+            <div class="m-print">Imprimir / Salvar PDF</div>
+          </div>
+        </div>
+        <div class="m-main">
+          <div class="m-toolbar">
+            <div class="m-toolbar-btn ac">Folha A4</div>
+            <div class="m-toolbar-btn">Fluida</div>
+            <div style="flex:1"></div>
+            <div class="m-toolbar-btn">2ª série A – Informática</div>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center;font-size:10px;color:#71717a">
+            <span>3º bimestre · 2025</span>
+          </div>
+          <div class="m-table-wrap">
+            <table class="m-table">
+              <thead>
+                <tr>
+                  <th style="width:22px">Nº</th>
+                  <th class="name" style="text-align:left">Aluno</th>
+                  <th>POR</th><th>MAT</th><th>BIO</th><th>HIS</th>
+                  <th>+</th>
+                  <th>Sit.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td><td class="name">Ana Beatriz S.</td>
+                  <td>7</td><td>8</td><td>9</td><td>6</td>
+                  <td class="plus" style="color:#3f3f46">+</td>
+                  <td style="color:#16a34a;font-weight:700;font-size:9px">APR</td>
+                </tr>
+                <tr>
+                  <td>2</td><td class="name">Carlos Eduardo M.</td>
+                  <td class="low">3</td><td class="low">2</td><td>5</td><td>4</td>
+                  <td class="plus" style="color:#3f3f46">+</td>
+                  <td style="color:#dc2626;font-weight:700;font-size:9px">REP</td>
+                </tr>
+                <tr>
+                  <td>3</td><td class="name">Daniela O.</td>
+                  <td>8</td><td>7</td><td>8</td><td>9</td>
+                  <td class="plus" style="color:#3f3f46">+</td>
+                  <td style="color:#16a34a;font-weight:700;font-size:9px">APR</td>
+                </tr>
+                <tr>
+                  <td>4</td><td class="name">Eduardo F.</td>
+                  <td>5</td><td class="low">4</td><td>6</td><td>5</td>
+                  <td class="plus" style="color:#3f3f46">+</td>
+                  <td style="color:#d97706;font-weight:700;font-size:9px">REC</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr><td></td><td>Média</td><td>5,7</td><td>5,2</td><td>7,0</td><td>6,0</td><td></td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="m-pills">
+            <div class="m-pill on">1º bimestre</div>
+            <div class="m-pill">2º bimestre</div>
+            <div class="m-pill on">3º bimestre</div>
+            <div class="m-pill">4º bimestre</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PALETA 3: ATUAL REFINADA ── -->
+  <div class="palette-card">
+    <div>
+      <div class="palette-label">
+        <span class="num">3</span>
+        <span class="name">Atual refinada</span>
+      </div>
+      <p class="palette-desc" style="margin-top:6px">Índigo escuro mantido. Fundo com leve viés azul. Tabela mais espaçada. Âmbar no imprimir com mais contraste.</p>
+    </div>
+    <div class="swatches">
+      <div class="sw" style="background:#1e1b4b" title="Sidebar"></div>
+      <div class="sw" style="background:#f1f5f9" title="Fundo"></div>
+      <div class="sw" style="background:#e9ecf5" title="Cabeçalho"></div>
+      <div class="sw" style="background:#ffffff" title="Card"></div>
+      <div class="sw" style="background:#4338ca" title="Acento"></div>
+      <div class="sw" style="background:#d97706" title="Imprimir"></div>
+      <div class="sw" style="background:#b91c1c" title="Baixo"></div>
+    </div>
+    <div class="mock-frame p3">
+      <div class="mock-inner">
+        <div class="m-sidebar">
+          <div class="m-sb-in">
+            <div class="m-brand">
+              <h1>Mapão · A4</h1>
+              <p>Rendimento escolar – SEDUC-SP</p>
+            </div>
+            <div class="m-hist">
+              <span>Histórico</span><span style="font-size:9px;font-weight:400">3</span>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">1. Planilha <span>▾</span></div>
+              <div class="m-section-body">
+                <div class="m-drop">Arraste os arquivos ou clique aqui<br><span style="font-size:9px">.xlsx, .xlsm ou .csv</span></div>
+              </div>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">5. Causas e providências <span>▾</span></div>
+              <div class="m-section-body">
+                <div class="m-btn">Editar causas e providências…</div>
+              </div>
+            </div>
+            <div class="m-section">
+              <div class="m-section-head">7. Professores <span>▾</span></div>
+              <div class="m-section-body">
+                <div style="display:flex;gap:4px;flex-wrap:wrap">
+                  <div class="m-btn" style="flex:1">Editar…</div>
+                  <div class="m-btn" style="flex:1">Importar…</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="m-sb-foot">
+            <div class="m-print">Imprimir / Salvar PDF</div>
+          </div>
+        </div>
+        <div class="m-main">
+          <div class="m-toolbar">
+            <div class="m-toolbar-btn ac">Folha A4</div>
+            <div class="m-toolbar-btn">Fluida</div>
+            <div style="flex:1"></div>
+            <div class="m-toolbar-btn">2ª série A – Informática</div>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center;font-size:10px;color:#64748b">
+            <span>3º bimestre · 2025</span>
+          </div>
+          <div class="m-table-wrap">
+            <table class="m-table">
+              <thead>
+                <tr>
+                  <th style="width:22px">Nº</th>
+                  <th class="name" style="text-align:left">Aluno</th>
+                  <th>POR</th><th>MAT</th><th>BIO</th><th>HIS</th>
+                  <th>+</th>
+                  <th>Sit.</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td><td class="name">Ana Beatriz S.</td>
+                  <td>7</td><td>8</td><td>9</td><td>6</td>
+                  <td class="plus" style="color:#4338ca">+</td>
+                  <td style="color:#15803d;font-weight:700;font-size:9px">APR</td>
+                </tr>
+                <tr>
+                  <td>2</td><td class="name">Carlos Eduardo M.</td>
+                  <td class="low">3</td><td class="low">2</td><td>5</td><td>4</td>
+                  <td class="plus" style="color:#4338ca">+</td>
+                  <td style="color:#b91c1c;font-weight:700;font-size:9px">REP</td>
+                </tr>
+                <tr>
+                  <td>3</td><td class="name">Daniela O.</td>
+                  <td>8</td><td>7</td><td>8</td><td>9</td>
+                  <td class="plus" style="color:#4338ca">+</td>
+                  <td style="color:#15803d;font-weight:700;font-size:9px">APR</td>
+                </tr>
+                <tr>
+                  <td>4</td><td class="name">Eduardo F.</td>
+                  <td>5</td><td class="low">4</td><td>6</td><td>5</td>
+                  <td class="plus" style="color:#4338ca">+</td>
+                  <td style="color:#d97706;font-weight:700;font-size:9px">REC</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr><td></td><td>Média</td><td>5,7</td><td>5,2</td><td>7,0</td><td>6,0</td><td></td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="m-pills">
+            <div class="m-pill on">1º bimestre</div>
+            <div class="m-pill">2º bimestre</div>
+            <div class="m-pill on">3º bimestre</div>
+            <div class="m-pill">4º bimestre</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<footer style="margin-top:48px;font-size:.78rem;color:var(--page-muted);border-top:1px solid var(--page-border);padding-top:16px">
+  Abrir em <code>mockups/paletas.html</code>. Para aplicar uma paleta ao sistema, edite as variáveis CSS de <code>#sidebar</code> e do corpo em <code>index.html</code>.
+</footer>
+
+</body>
+</html>
