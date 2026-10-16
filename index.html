@@ -295,10 +295,10 @@
       <summary><h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">1. Planilha</h2></summary>
       <div class="sec-body">
       <label id="drop" for="fileInput" class="flex flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-300 rounded-lg px-3 py-5 text-center cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 transition">
-        <span class="text-sm font-medium">Arraste o arquivo ou clique aqui</span>
+        <span class="text-sm font-medium">Arraste os arquivos ou clique aqui</span>
         <span class="text-xs text-slate-500">.xlsx, .xlsm ou .csv</span>
       </label>
-      <input id="fileInput" type="file" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.txt" class="hidden">
+      <input id="fileInput" type="file" accept=".xlsx,.xlsm,.xls,.csv,.tsv,.txt" class="hidden" multiple>
       <p id="fileName" class="mt-2 text-xs text-slate-600 break-all"></p>
       <div id="sheetBox" class="hidden mt-2">
         <label class="text-xs text-slate-500">Aba</label>
@@ -480,7 +480,7 @@
       <h2 class="text-xl font-semibold mb-1 text-center">Mapão · Relatório A4</h2>
       <p class="text-slate-600 text-sm mb-5 text-center">Transforma o Mapão escolar (planilha) em um relatório de rendimento em folha A4 retrato, com ata e folha de assinaturas. Tudo é processado no seu navegador.</p>
       <ol class="text-sm text-slate-700 space-y-2.5 list-none">
-        <li><b>1. Envie a planilha</b> do Mapão (.xlsx, .xlsm ou .csv) pela barra lateral (clique ou arraste). O sistema acha sozinho a linha de cabeçalho com “ALUNO”, ignora os blocos institucionais e lê também a frequência anual (Fre An %).</li>
+        <li><b>1. Envie a planilha</b> do Mapão (.xlsx, .xlsm ou .csv) pela barra lateral (clique ou arraste; pode enviar várias de uma vez). O sistema acha sozinho a linha de cabeçalho com “ALUNO”, ignora os blocos institucionais e lê também a frequência anual (Fre An %).</li>
         <li><b>2. Escolha o bimestre</b> (1º a 4º) na janela que abre. O relatório é salvo no <b>histórico</b> com nome curto (ex.: “2ª série A – Administração”), e uma janela mostra série, turma, curso e as <b>matérias sem digitação</b>, para você conferir.</li>
         <li><b>3. Confira as matérias</b> na barra lateral. Todas aparecem, mesmo vazias: desmarque as que quiser ocultar e ajuste as siglas (no relatório elas ficam na vertical).</li>
         <li><b>4. Marque causas e providências</b> clicando no <b>+</b> de cada aluno: uma única janela, com as duas listas. As listas já vêm preenchidas e podem ser editadas em “Editar listas…”.</li>
@@ -534,6 +534,19 @@
     <div class="px-5 py-3 border-t flex justify-end gap-2">
       <button id="bimCancel" type="button" class="px-3 py-2 rounded-lg text-sm border hover:bg-slate-50">Cancelar</button>
       <button id="bimOk" type="button" class="px-4 py-2 rounded-lg text-sm bg-indigo-700 hover:bg-indigo-800 disabled:opacity-40 text-white font-semibold">Criar relatório</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Confirmação de envio de várias planilhas ============ -->
+<div id="multiModal" data-dlg class="no-print hidden fixed inset-0 z-[56] items-center justify-center bg-slate-900/50 p-4" role="dialog" aria-modal="true" aria-labelledby="multiTitle">
+  <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm flex flex-col">
+    <div class="px-5 py-5">
+      <h2 id="multiTitle" class="text-base font-semibold"></h2>
+    </div>
+    <div class="px-5 py-3 border-t flex justify-end gap-2">
+      <button id="multiCancel" type="button" class="px-3 py-2 rounded-lg text-sm border hover:bg-slate-50">Cancelar</button>
+      <button id="multiOk" type="button" class="px-4 py-2 rounded-lg text-sm bg-indigo-700 hover:bg-indigo-800 text-white font-semibold">Confirmar</button>
     </div>
   </div>
 </div>
@@ -1175,7 +1188,7 @@ async function readWorkbook(file) {
 }
 const sheetRows = n => XLSX.utils.sheet_to_json(S.wb.Sheets[n], { header: 1, raw: false, defval: '', blankrows: true });
 
-async function handleFile(file) {
+async function handleFile(file, onDone, quiet) {
   try {
     msg('');
     if (typeof XLSX === 'undefined') throw new Error('A biblioteca SheetJS não carregou (sem internet?). Verifique a conexão e recarregue a página.');
@@ -1189,8 +1202,25 @@ async function handleFile(file) {
     sel.innerHTML = S.sheetNames.map(n => `<option ${n === pick ? 'selected' : ''}>${esc(n)}</option>`).join('');
     $('#sheetBox').classList.toggle('hidden', S.sheetNames.length < 2);
     S.sheet = pick;
-    await startUpload(sheetRows(pick), pick, false);
-  } catch (e) { msg(e.message || String(e), 'error'); }
+    await startUpload(sheetRows(pick), pick, false, onDone, quiet);
+  } catch (e) { msg(e.message || String(e), 'error'); if (onDone) onDone(); }
+}
+
+// Várias planilhas: uma confirmação só; depois cada arquivo segue o fluxo normal (bimestre), um por vez
+const MU = { ok: null, done: true };
+function confirmMulti(n) {
+  return new Promise(resolve => {
+    $('#multiTitle').textContent = 'Confirma o envio de ' + n + ' arquivos?';
+    MU.done = false;
+    MU.ok = () => { if (MU.done) return; MU.done = true; resolve(true); Dlg.close($('#multiModal')); };
+    Dlg.open($('#multiModal'), { onOk: MU.ok, focus: '#multiOk', onClose: () => { if (!MU.done) { MU.done = true; resolve(false); } } });
+  });
+}
+async function handleFiles(files) {
+  const arr = Array.from(files);
+  if (arr.length < 2) { if (arr[0]) handleFile(arr[0]); return; }
+  if (!await confirmMulti(arr.length)) { toast('Envio cancelado.'); return; }
+  for (let i = 0; i < arr.length; i++) await new Promise(done => handleFile(arr[i], done, i < arr.length - 1));
 }
 
 // Monta o estado a partir da planilha lida (res) ou de um relatório salvo (saved = true: mantém matérias marcadas e siglas)
@@ -1285,16 +1315,17 @@ function reportLabel(sheet) {
   return S.sheetNames.length > 1 && sheet ? base + ' – ' + sheet : base;
 }
 // Lê a planilha (erros aparecem antes do modal) e pergunta o bimestre; só então o relatório é criado
-async function startUpload(rows, sheet, replacePristine) {
+async function startUpload(rows, sheet, replacePristine, onDone, quiet) {
   const res = Core.parseRows(rows);
   const label = shortName(parseTurmaInfo(res.meta.turma, S.fileName)) || reportLabel(sheet), guess = guessBim(S.fileName) || guessBim(res.meta.periodo || '');
   askBim(label, guess, async bim => {
     if (replacePristine) await dropIfPristine();   // trocou de aba sem ter mexido no relatório: não deixa lixo no histórico
-    await createReport(res, label, sheet, bim);
-  }, () => { if (replacePristine) $('#sheetSelect').value = S.sheet; else toast('Envio cancelado.'); });
+    await createReport(res, label, sheet, bim, quiet);
+    if (onDone) onDone();
+  }, () => { if (replacePristine) $('#sheetSelect').value = S.sheet; else toast('Envio cancelado.'); if (onDone) onDone(); });
 }
 
-async function createReport(res, label, sheet, bim) {
+async function createReport(res, label, sheet, bim, quiet) {
   const list = await Repo.listReports();
   const id = 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   S.reportId = id; S.reportName = uniqueName(label, list, bim); S.bim = bim; S.sheet = sheet; S.freshId = id;
@@ -1303,7 +1334,7 @@ async function createReport(res, label, sheet, bim) {
   if (!ok) toast('Não foi possível salvar no histórico (armazenamento do navegador cheio?).');
   updateHistCount();
   location.hash = '#/r/' + id;
-  showReportModal(true);
+  if (!quiet) showReportModal(true);
 }
 
 async function dropIfPristine() {
@@ -1727,6 +1758,8 @@ function bindHist() {
   });
   $('#bimCancel').addEventListener('click', () => Dlg.tryClose($('#bimModal')));
   $('#bimOk').addEventListener('click', confirmBim);
+  $('#multiCancel').addEventListener('click', () => Dlg.tryClose($('#multiModal')));
+  $('#multiOk').addEventListener('click', () => { if (MU.ok) MU.ok(); });
   window.addEventListener('hashchange', route);
 }
 
@@ -2509,9 +2542,9 @@ function bindSidebar() {
 
 /* ---------- eventos ---------- */
 function bind() {
-  $('#fileInput').addEventListener('change', e => { const f = e.target.files[0]; if (f) handleFile(f); e.target.value = ''; });
+  $('#fileInput').addEventListener('change', e => { const fs = Array.from(e.target.files); e.target.value = ''; if (fs.length) handleFiles(fs); });
   ['dragover', 'drop'].forEach(ev => window.addEventListener(ev, e => e.preventDefault()));
-  window.addEventListener('drop', e => { const f = e.dataTransfer && e.dataTransfer.files[0]; if (f) handleFile(f); });
+  window.addEventListener('drop', e => { const fs = e.dataTransfer ? Array.from(e.dataTransfer.files) : []; if (fs.length) handleFiles(fs); });
   $('#sheetSelect').addEventListener('change', e => { if (S.wb) startUpload(sheetRows(e.target.value), e.target.value, true).catch(err => { msg(err.message, 'error'); $('#sheetSelect').value = S.sheet; }); });
   $('#btnDemo').addEventListener('click', () => { S.wb = null; S.fileName = 'exemplo.xlsx'; $('#sheetBox').classList.add('hidden'); msg(''); ingest(demoRows(), 'exemplo.xlsx|demo').catch(err => msg(err.message, 'error')); });
 
