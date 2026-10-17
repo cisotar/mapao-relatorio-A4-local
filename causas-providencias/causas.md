@@ -1,17 +1,57 @@
 # Causas
 
 - Habilidades essenciais defasadas
+  - Nivelamento (recuperação de habilidades anteriores).
+  - Plano de Recuperação.
+  - Orientação de estudos individualizada.
 - Dificuldade de expressar-se oralmente ou por escrito de forma clara.
+  - Metodologia adaptada.
+  - Orientação de estudos individualizada.
+  - Intensificação da tutoria.
 - Dificuldade na leitura e interpretação de textos.
+  - Nivelamento (recuperação de habilidades anteriores).
+  - Orientação de estudos individualizada.
+  - Metodologia adaptada.
 - Dificuldade em compreender, desenvolver e interpretar operações matemáticas e desenvolver raciocínio lógico.
+  - Nivelamento (recuperação de habilidades anteriores).
+  - Intensificação da tutoria.
+  - Metodologia adaptada.
 - Dificuldade na construção de conceitos.
+  - Metodologia adaptada.
+  - Orientação de estudos individualizada.
 - Dificuldade no relacionamento de ideias.
+  - Metodologia adaptada.
+  - Orientação de estudos individualizada.
 - Dificuldade em desenvolver habilidades de resumir e sintetizar, selecionando informações.
+  - Orientação de estudos individualizada.
+  - Metodologia adaptada.
 - Dificuldade em leitura, interpretação e construção de dados em tabelas e gráficos.
+  - Nivelamento (recuperação de habilidades anteriores).
+  - Metodologia adaptada.
 - Dificuldade de expressar-se e comunicar-se utilizando diferentes linguagens.
+  - Metodologia adaptada.
+  - Intensificação da tutoria.
 - Dificuldade em cooperar e participar das atividades em grupo.
+  - Respeitar as normas de convivência.
+  - Encaminhar para avaliação com profissional especializado.
 - Não realiza as atividades propostas/falta em avaliações.
+  - Realizar as atividades propostas em sala de aula.
+  - Realizar a compensação de ausências.
+  - Plano de Recuperação.
 - Falta de concentração e atenção.
+  - Encaminhar para avaliação com profissional especializado.
+  - Metodologia adaptada.
+  - Convocar os responsáveis para reunião individualizada.
 - Não cumpre as normas estabelecidas.
+  - Respeitar as normas de convivência.
+  - Convocar os responsáveis para reunião individualizada.
 - Frequência insuficiente.
+  - Regularidade na frequência.
+  - Busca ativa
+  - Realizar a compensação de ausências.
+  - Convocar os responsáveis para reunião individualizada.
+  - Encaminhar ao Conselho Tutelar.
 - Dificuldade em desenvolver habilidades socioemocionais.
+  - Encaminhar para avaliação com profissional especializado.
+  - Convocar os responsáveis para reunião individualizada.
+  - Respeitar as normas de convivência.

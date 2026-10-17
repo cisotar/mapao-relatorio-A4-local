@@ -243,6 +243,7 @@
   .pill:hover { border-color:#52525b; }
   .pill:focus-visible { outline:2px solid #3f3f46; outline-offset:2px; }
   .pill .pn { flex:none; width:1.5rem; height:1.5rem; border-radius:9999px; background:#e2e8f0; display:grid; place-items:center; font-weight:700; font-size:.75rem; }
+  .pill.sug:not(.on) { border-style:dashed; border-color:#a16207; background:#fefce8; }
   .pill.on { background:#3f3f46; color:#fff; border-color:#3f3f46; }
   .pill.on .pn { background:#fff; color:#3f3f46; }
   /* editor de listas: textarea sem quebra automática + gutter com o número que cada linha terá no relatório */
@@ -601,6 +602,7 @@
         <div class="flex items-center justify-between mb-2"><h3 id="mHp" class="text-sm font-semibold">Providências</h3><button type="button" data-mclear="provs" class="text-xs text-slate-500 hover:underline">Limpar</button></div>
         <div id="mPills-provs" class="flex flex-wrap gap-2"></div>
         <p id="mSum-provs" class="mt-2 text-xs text-slate-500"></p>
+        <p id="mSug" class="mt-1 text-xs hidden"><span class="text-amber-800">Sugeridas pelas causas marcadas (contorno tracejado): <b id="mSugN"></b></span> <button id="mSugBtn" type="button" class="ml-1 font-semibold text-slate-800 underline">Marcar sugeridas</button></p>
       </section>
     </div>
     <div class="px-5 py-3 border-t flex items-center justify-between gap-3 flex-wrap">
@@ -1055,7 +1057,7 @@ const Core = (() => {
    Lidas de causas-providencias/causas.md e providencias.md no carregamento.
    Semeiam o navegador uma única vez e alimentam "Restaurar do arquivo" do editor.
    ==================================================================== */
-const DEFAULT_LISTS = { causas: [], provs: [] };
+const DEFAULT_LISTS = { causas: [], provs: [], sugg: {} };   // sugg: causa (normalizada) -> providências sugeridas
 const DEFAULT_FILES = { causas: 'causas-providencias/causas.md', provs: 'causas-providencias/providencias.md', teachers: 'professores/professores.md' };
 async function fetchText(path) {
   const r = await fetch(path, { cache: 'no-cache' });
@@ -1065,16 +1067,25 @@ async function fetchText(path) {
 function parseListMd(text) {   // um item por linha; ignora títulos (#) e linhas vazias; aceita "- item"
   const seen = new Set(), out = [];
   String(text).split(/\r?\n/).forEach(raw => {
+    if (/^\s+[-*•]\s/.test(raw)) return;   // subitem recuado = providência sugerida (ver parseSuggestions)
     const t = raw.replace(/^\s*[-*•]\s+/, '').replace(/\s+/g, ' ').trim();
     if (!t || /^#/.test(raw.trim())) return;
     const k = t.toLowerCase(); if (seen.has(k)) return; seen.add(k); out.push(t.slice(0, 300));
   });
   return out.slice(0, 200);
 }
+function parseSuggestions(text) {   // "- causa" seguida de subitens recuados "  - providência"
+  const out = {}; let cur = null;
+  String(text).split(/\r?\n/).forEach(raw => {
+    if (/^\s+[-*•]\s/.test(raw)) { if (cur) cur.push(Core.norm(raw.replace(/^\s*[-*•]\s+/, ''))); }
+    else if (/^[-*•]\s/.test(raw)) cur = out[Core.norm(raw.replace(/^[-*•]\s+/, ''))] = [];
+  });
+  return out;
+}
 async function loadDefaultLists() {   // true se as duas listas foram lidas
   try {
     const [c, p] = await Promise.all([fetchText(DEFAULT_FILES.causas), fetchText(DEFAULT_FILES.provs)]);
-    DEFAULT_LISTS.causas = parseListMd(c); DEFAULT_LISTS.provs = parseListMd(p);
+    DEFAULT_LISTS.causas = parseListMd(c); DEFAULT_LISTS.provs = parseListMd(p); DEFAULT_LISTS.sugg = parseSuggestions(c);
     return DEFAULT_LISTS.causas.length + DEFAULT_LISTS.provs.length > 0;
   } catch { return false; }
 }
@@ -2372,11 +2383,16 @@ function openModal(kind, i) {
 }
 const closeModal = () => Dlg.tryClose($('#modal'));
 
+function suggestedProvs() {   // ids das providências sugeridas para as causas marcadas no modal
+  const want = new Set();
+  S.db.causas.forEach(c => { if (M.sel.causas.has(c.id)) (DEFAULT_LISTS.sugg[Core.norm(c.text)] || []).forEach(t => want.add(t)); });
+  return new Set(S.db.provs.filter(p => want.has(Core.norm(p.text))).map(p => p.id));
+}
 function renderModal() {
   KINDS.forEach(k => {
-    const items = S.db[k], sel = M.sel[k];
+    const items = S.db[k], sel = M.sel[k], sug = k === 'provs' ? suggestedProvs() : new Set();
     $('#mPills-' + k).innerHTML = items.length ? items.map((it, i) => `
-      <div class="pill ${sel.has(it.id) ? 'on' : ''}" role="button" tabindex="0" aria-pressed="${sel.has(it.id)}" data-kind="${k}" data-id="${it.id}">
+      <div class="pill ${sel.has(it.id) ? 'on' : ''} ${sug.has(it.id) ? 'sug' : ''}" role="button" tabindex="0" aria-pressed="${sel.has(it.id)}" data-kind="${k}" data-id="${it.id}">
         <span class="pn">${i + 1}</span><span>${esc(it.text)}</span>
       </div>`).join('')
       : `<div class="w-full rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-600">
@@ -2384,8 +2400,14 @@ function renderModal() {
       <button type="button" data-open-editor="current" class="text-indigo-700 font-semibold hover:underline">Cadastrar agora…</button></div>`;
     $('#mSum-' + k).textContent = sel.size ? sel.size + ' selecionado(s): ' + Core.condense(Core.displayNums([...sel], items)) : 'Nenhum item selecionado';
   });
+  renderSug();
 }
 
+function renderSug() {
+  const ids = [...suggestedProvs()].filter(id => !M.sel.provs.has(id)), box = $('#mSug');
+  box.classList.toggle('hidden', !ids.length);
+  $('#mSugN').textContent = ids.map(id => S.db.provs.find(p => p.id === id).text.replace(/\.$/, '')).join(' · ');
+}
 function toggleSel(kind, id) { const s = M.sel[kind]; s.has(id) ? s.delete(id) : s.add(id); renderModal(); }
 
 function confirmModal() {
@@ -2705,6 +2727,7 @@ function bind() {
 
   // modal por aluno (causas + providências no mesmo modal)
   $('#modal').addEventListener('click', e => {
+    if (e.target.closest('#mSugBtn')) { suggestedProvs().forEach(id => M.sel.provs.add(id)); renderModal(); return; }
     const p = e.target.closest('.pill[data-kind]'); if (p) { toggleSel(p.dataset.kind, +p.dataset.id); return; }
     const c = e.target.closest('[data-mclear]'); if (c) { M.sel[c.dataset.mclear].clear(); renderModal(); }
   });
