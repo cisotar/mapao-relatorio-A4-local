@@ -216,10 +216,11 @@ const Core = (() => {
   };
   const fmtGrade = v => { const t = String(v == null ? '' : v).trim(); return toNum(t) !== null ? t.replace('.', ',') : t; };
 
-  // Nota digitada à mão: só inteiros (até 3 dígitos). '' = voltar ao valor da planilha; null = inválido.
+  // Nota digitada à mão: inteiro (até 3 dígitos) ou '-' (sem nota). '' = voltar ao valor da planilha; null = inválido.
   function parseIntGrade(v) {
     const t = clean(v);
     if (t === '') return '';
+    if (t === '-') return '-';
     return /^\d{1,3}$/.test(t) ? String(parseInt(t, 10)) : null;
   }
 
@@ -1884,7 +1885,7 @@ function finishEdit(save, move, deferred) {
   const td = gradeCell(i, s);
   if (save) {
     const v = Core.parseIntGrade(inp.value);
-    if (v === null) toast('Digite apenas números inteiros (até 3 dígitos).'); else setGrade(i, s, v);
+    if (v === null) toast('Digite um número inteiro (até 3 dígitos) ou - (sem nota).'); else setGrade(i, s, v);
   }
   if (deferred) { if (td) paintCell(td, i, s); queueFlush(); return; }
   const t = move && td && neighbor(td, ...MOVES[move]);
@@ -1920,7 +1921,7 @@ function bindInline() {
       const mv = { ArrowDown: 'down', ArrowUp: 'up', ArrowRight: 'right', ArrowLeft: 'left' }[e.key];
       if (mv) { e.preventDefault(); const t = neighbor(td, ...MOVES[mv]); if (t) t.focus(); }
       else if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); startEdit(td); }
-      else if (/^\d$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); startEdit(td, e.key); }
+      else if (/^[\d-]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); startEdit(td, e.key); }
       else if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); setGrade(+td.dataset.i, +td.dataset.s, ''); const i = td.dataset.i, s = td.dataset.s; refresh(); const f = gradeCell(i, s); if (f) f.focus(); }
       return;
     }
