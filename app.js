@@ -1737,6 +1737,32 @@ function showReportModal(isNew) {
   Dlg.open($('#warnModal'), { focus: '#warnOk' });
 }
 
+// Ao abrir o app: lista, por relatório salvo, as matérias exibidas que não têm nenhuma nota (nem digitada à mão)
+async function showEmptySubjectsModal() {
+  const groups = [];
+  for (const e of (await Repo.listReports()).sort((x, y) => (x.bim || 9) - (y.bim || 9) || cmpNat(x.name, y.name))) {
+    const snap = await Repo.getReport(e.id);
+    if (!snap || !Array.isArray(snap.students) || !Array.isArray(snap.subjects)) continue;
+    const edited = new Set();
+    Object.values(await Repo.getMarks(e.id)).forEach(m => Object.keys(m && m.g && typeof m.g === 'object' ? m.g : {}).forEach(k => edited.add(k)));
+    const empty = snap.subjects.filter((s, i) => s.include && !edited.has(Core.norm(s.full)) &&
+      !snap.students.some(st => { const g = Core.clean((st.grades || [])[i]); return g !== '' && g !== '-'; }));
+    if (empty.length) {
+      const c = classOf(snap.meta && snap.meta.turma, e.fileName), rows = (c && S.teachers[c.key] && S.teachers[c.key].rows) || [];
+      const lines = empty.flatMap(s => {   // "Professor - Matéria"; sem professor cadastrado, só a matéria
+        const n = Core.norm(s.full), hit = rows.filter(r => { const k = Core.norm(r.comp); return k === n || n.includes(k) || k.includes(n); });
+        return hit.length ? hit.map(r => r.nome + ' - ' + s.full) : [s.full];
+      });
+      groups.push({ e, lines });
+    }
+  }
+  if (!groups.length) return;
+  $('#emptyList').innerHTML = groups.map(({ e, lines }) => `<div>
+    <h3 class="font-semibold">${esc(e.name)} <span class="font-normal text-slate-500">${e.bim ? '· ' + bimLabel(e.bim) : ''}</span></h3>
+    <ul class="mt-1 rounded-lg border border-amber-300 bg-amber-50 p-3 space-y-0.5">${lines.map(t => `<li class="font-semibold text-amber-800">${esc(t)}</li>`).join('')}</ul></div>`).join('');
+  Dlg.open($('#emptyModal'), { focus: '#emptyOk' });
+}
+
 /* ---------- modal de edição em bloco das listas ---------- */
 // Botão "Restaurar do arquivo": relê os md e preenche os textareas (não grava até clicar em Salvar).
 const E = { initial: {} };
@@ -2100,6 +2126,8 @@ async function init() {
   bindHist(); bindTeachers(); bindZoom(); syncMetaInputs(); syncOptInputs(); refresh();
   updateHistCount();
   await route();
+  $('#emptyOk').addEventListener('click', () => Dlg.close($('#emptyModal')));
+  await showEmptySubjectsModal();
   $('#backupNagNow').addEventListener('click', () => exportReports(0, true));
   $('#backupNagLater').addEventListener('click', async () => { $('#backupNag').classList.add('hidden'); const i = await Repo.getBackupInfo(); i.snooze = Date.now() + BACKUP_SNOOZE_DAYS * DAY_MS; await Repo.saveBackupInfo(i); });
   backupReminder();
